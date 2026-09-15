@@ -5,5 +5,6 @@ data class ChatMessage(
     val senderId: String,
     val messageText: String,
     val timestamp: Long,
+    val isFromMe: Boolean,
     val isEmergency: Boolean = false
 )
