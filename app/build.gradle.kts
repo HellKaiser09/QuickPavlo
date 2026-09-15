@@ -71,4 +71,7 @@ dependencies {
     implementation(libs.camera.camera2)
     implementation(libs.camera.lifecycle)
     implementation(libs.camera.view)
+
+    // ZXing para generación de código QR
+    implementation(libs.zxing.core)
 }

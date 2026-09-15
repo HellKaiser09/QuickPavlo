@@ -17,5 +17,5 @@ interface ChatDao {
     fun getChatHistory(): Flow<List<ChatMessageEntity>>
 
     @Query("DELETE FROM chat_messages")
-    suspend fun clearAllMessages()
+    suspend fun clearAllMessages(): Int
 }

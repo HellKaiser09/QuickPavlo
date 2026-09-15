@@ -20,5 +20,5 @@ interface FileTransferDao {
 
     // Limpieza de historial
     @Query("DELETE FROM file_transfers")
-    suspend fun clearAllTransfers()
+    suspend fun clearAllTransfers(): Int
 }
