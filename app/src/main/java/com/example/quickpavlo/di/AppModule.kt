@@ -17,7 +17,7 @@ object AppModule {
     @Provides
     @Singleton
     fun provideAppDatabase(app: Application): AppDatabase{
-        return RRoom.databaseBuilder(
+        return Room.databaseBuilder(
             app,
             AppDatabase::class.java,
             "quickpavlo_p2p_db"
@@ -26,7 +26,7 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideChatDao(db: AppDatabase): chatDao {
+    fun provideChatDao(db: AppDatabase): ChatDao {
         return db.chatDao
     }
 
