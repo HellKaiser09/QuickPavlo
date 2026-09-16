@@ -3,47 +3,34 @@ package com.example.quickpavlo.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.quickpavlo.ui.theme.QuickPavloTheme
 import dagger.hilt.android.AndroidEntryPoint
+import com.example.quickpavlo.ui.navigation.QuickPavloNavHost
 
+// 1. LA ETIQUETA DE HILT:
+// Esto convierte a tu Activity en un "Receptor". Le dice a Hilt que a partir de aquí hacia abajo,
+// cualquier pantalla o ViewModel puede pedir dependencias (como nuestro motor P2P).
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
+
         setContent {
-            QuickPavloTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+            // Envolvemos toda la app en el tema base de Material Design 3
+            MaterialTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    // 2. EL DIRECTOR DE TRÁFICO:
+                    // Entregamos el control de la pantalla a nuestro NavHost
+                    QuickPavloNavHost()
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    QuickPavloTheme {
-        Greeting("Android")
     }
 }
