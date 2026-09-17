@@ -6,7 +6,7 @@ import androidx.room.RoomDatabase
 // Base de datos local Room de la aplicación
 @Database(
     entities = [ChatMessageEntity::class, FileTransferEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
