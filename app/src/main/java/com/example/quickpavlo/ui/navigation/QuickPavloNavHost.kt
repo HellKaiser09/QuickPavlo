@@ -112,7 +112,11 @@ fun QuickPavloNavHost(
 
         // 5. RUTA C: SALA DE CHAT P2P
         composable(Screen.ChatSession.route) {
-            ChatScreen()
+            ChatScreen(
+                onNavigateUp = {
+                    navController.popBackStack(Screen.Home.route, inclusive = false)
+                }
+            )
         }
     }
 }
