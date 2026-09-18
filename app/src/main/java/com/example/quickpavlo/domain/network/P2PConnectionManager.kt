@@ -15,18 +15,27 @@ enum class ConnectionState {
 
 sealed class PayloadEvent {
     data class Text(val text: String) : PayloadEvent()
-    data class FileMeta(val payloadId: Long, val fileName: String, val fileSize: Long) : PayloadEvent()
+    data class FileMeta(
+        val payloadId: Long,
+        val fileName: String,
+        val fileSize: Long,
+        val offset: Long = 0L,
+        val originalPayloadId: Long = 0L
+    ) : PayloadEvent()
     data class FileProgress(
         val payloadId: Long,
         val bytesTransferred: Long,
         val totalBytes: Long,
-        val status: String // "IN_PROGRESS", "COMPLETED", "FAILED", "PAUSED"
+        val status: String
     ) : PayloadEvent()
     data class FileReceived(val payloadId: Long, val fileUri: String) : PayloadEvent()
+    data class ControlResume(val payloadId: Long, val offset: Long) : PayloadEvent()
+    data class MetaResume(val newPayloadId: Long, val oldPayloadId: Long, val offset: Long) : PayloadEvent()
 }
 
 interface P2PConnectionManager {
     val connectionState: StateFlow<ConnectionState>
+    val activeSessionId: StateFlow<String>
     val incomingPayloads: Flow<String>
     val payloadEvents: Flow<PayloadEvent>
 
@@ -35,5 +44,13 @@ interface P2PConnectionManager {
 
     fun sendPayload(data: String)
     fun sendFilePayload(uri: Uri, fileName: String, fileSize: Long): Long?
+    fun sendFilePayloadWithOffset(
+        uri: Uri,
+        fileName: String,
+        fileSize: Long,
+        offset: Long,
+        originalPayloadId: Long
+    ): Long?
+
     fun disconnect()
 }

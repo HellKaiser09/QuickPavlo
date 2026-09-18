@@ -94,6 +94,7 @@ fun QuickPavloNavHost(
         composable(Screen.ClientScanner.route) {
             val clientViewModel: ClientViewModel = hiltViewModel()
             val connectionState by clientViewModel.connectionState.collectAsState(initial = ConnectionState.IDLE)
+            val isConnecting by clientViewModel.isConnecting.collectAsState()
 
             LaunchedEffect(connectionState) {
                 if (connectionState == ConnectionState.CONNECTED) {
@@ -104,6 +105,7 @@ fun QuickPavloNavHost(
             }
 
             CameraScannerScreen(
+                isConnecting = isConnecting,
                 onQrScanned = { scannedToken ->
                     clientViewModel.startConnecting(scannedToken)
                 }

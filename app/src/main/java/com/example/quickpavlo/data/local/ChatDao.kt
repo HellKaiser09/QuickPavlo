@@ -11,6 +11,9 @@ interface ChatDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMessage(message: ChatMessageEntity)
 
+    @Query("SELECT * FROM chat_messages WHERE sessionId = :sessionId ORDER BY timestamp ASC")
+    fun getChatHistoryBySession(sessionId: String): Flow<List<ChatMessageEntity>>
+
     @Query("SELECT * FROM chat_messages ORDER BY timestamp ASC")
     fun getChatHistory(): Flow<List<ChatMessageEntity>>
 
