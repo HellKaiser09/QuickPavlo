@@ -7,6 +7,7 @@ import com.example.quickpavlo.domain.model.ChatMessage
 @Entity(tableName = "chat_messages")
 data class ChatMessageEntity(
     @PrimaryKey val id: String,
+    val sessionId: String = "",
     val senderName: String,
     val message: String,
     val timestamp: Long,
@@ -37,9 +38,10 @@ data class ChatMessageEntity(
     }
 
     companion object {
-        fun fromDomain(domain: ChatMessage): ChatMessageEntity {
+        fun fromDomain(domain: ChatMessage, sessionId: String = ""): ChatMessageEntity {
             return ChatMessageEntity(
                 id = domain.id,
+                sessionId = sessionId,
                 senderName = domain.senderName,
                 message = domain.messageText,
                 timestamp = domain.timestamp,

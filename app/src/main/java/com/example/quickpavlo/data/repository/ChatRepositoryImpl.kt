@@ -3,6 +3,7 @@ package com.example.quickpavlo.data.repository
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
+import android.util.Log
 import com.example.quickpavlo.data.local.ChatDao
 import com.example.quickpavlo.data.local.ChatMessageEntity
 import com.example.quickpavlo.data.local.FileTransferDao
@@ -14,15 +15,18 @@ import com.example.quickpavlo.domain.network.PayloadEvent
 import com.example.quickpavlo.domain.repository.ChatRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class ChatRepositoryImpl @Inject constructor(
     private val chatDao: ChatDao,
@@ -30,6 +34,7 @@ class ChatRepositoryImpl @Inject constructor(
     private val p2pManager: P2PConnectionManager
 ) : ChatRepository {
 
+    private val TAG = "QuickPavloP2P"
     private val repositoryScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     init {
@@ -48,10 +53,12 @@ class ChatRepositoryImpl @Inject constructor(
 
         repositoryScope.launch {
             p2pManager.payloadEvents.collect { event ->
+                val currentSessionId = p2pManager.activeSessionId.value
                 when (event) {
                     is PayloadEvent.Text -> {
                         val entity = ChatMessageEntity(
                             id = UUID.randomUUID().toString(),
+                            sessionId = currentSessionId,
                             senderName = "Peer",
                             message = event.text,
                             timestamp = System.currentTimeMillis(),
@@ -61,35 +68,37 @@ class ChatRepositoryImpl @Inject constructor(
                         chatDao.insertMessage(entity)
                     }
                     is PayloadEvent.FileMeta -> {
-                        val entity = ChatMessageEntity(
-                            id = event.payloadId.toString(),
-                            senderName = "Peer",
-                            message = event.fileName,
-                            timestamp = System.currentTimeMillis(),
-                            isFromMe = false,
-                            isFile = true,
-                            fileName = event.fileName,
-                            fileSize = event.fileSize,
-                            bytesTransferred = 0L,
-                            fileStatus = "IN_PROGRESS",
-                            payloadId = event.payloadId
-                        )
-                        chatDao.insertMessage(entity)
-                        fileTransferDao.insertOrUpdateTransfer(
-                            FileTransferEntity(
-                                payloadId = event.payloadId,
+                        Log.i(TAG, "[REPO] Evento FileMeta recibido: payloadId=${event.payloadId}, name=${event.fileName}, size=${event.fileSize}, offset=${event.offset}")
+                        val existingMessage = chatDao.getMessageByPayloadId(event.payloadId)
+                        if (existingMessage == null) {
+                            val entity = ChatMessageEntity(
+                                id = event.payloadId.toString(),
+                                sessionId = currentSessionId,
+                                senderName = "Peer",
+                                message = event.fileName,
+                                timestamp = System.currentTimeMillis(),
+                                isFromMe = false,
+                                isFile = true,
                                 fileName = event.fileName,
-                                totalBytes = event.fileSize,
-                                bytesTransferred = 0L,
-                                isIncoming = true,
-                                isCompleted = false
+                                fileSize = event.fileSize,
+                                bytesTransferred = event.offset,
+                                fileStatus = "IN_PROGRESS",
+                                payloadId = event.payloadId
                             )
-                        )
+                            chatDao.insertMessage(entity)
+                        } else {
+                            chatDao.updateFileProgress(event.payloadId, event.offset, "IN_PROGRESS")
+                        }
+                    }
+                    is PayloadEvent.MetaResume -> {
+                        Log.i(TAG, "[REPO] Evento MetaResume recibido: newPayloadId=${event.newPayloadId}, oldPayloadId=${event.oldPayloadId}, offset=${event.offset}")
+                        chatDao.updateFileProgress(event.oldPayloadId, event.offset, "IN_PROGRESS")
                     }
                     is PayloadEvent.FileProgress -> {
                         chatDao.updateFileProgress(event.payloadId, event.bytesTransferred, event.status)
                     }
                     is PayloadEvent.FileReceived -> {
+                        Log.i(TAG, "[REPO] Evento FileReceived recibido: payloadId=${event.payloadId}, path=${event.fileUri}")
                         val existingMsg = chatDao.getMessageByPayloadId(event.payloadId)
                         val totalBytes = existingMsg?.fileSize ?: 0L
                         chatDao.updateFileCompleted(
@@ -104,21 +113,50 @@ class ChatRepositoryImpl @Inject constructor(
                             )
                         }
                     }
+                    is PayloadEvent.ControlResume -> {
+                        Log.i(TAG, "[REPO] Evento ControlResume recibido en Emisor: oldPayloadId=${event.payloadId}, offset=${event.offset}")
+                        val message = chatDao.getMessageByPayloadId(event.payloadId)
+                        if (message != null && message.isFromMe && message.fileUri != null) {
+                            val uri = Uri.parse(message.fileUri)
+                            Log.i(TAG, "[EMISOR REANUDANDO POR CONTROL] Reanudando envio desde URI: $uri con offset: ${event.offset}")
+                            val newPayloadId = p2pManager.sendFilePayloadWithOffset(
+                                uri = uri,
+                                fileName = message.fileName ?: "file",
+                                fileSize = message.fileSize,
+                                offset = event.offset,
+                                originalPayloadId = event.payloadId
+                            )
+                            if (newPayloadId != null) {
+                                Log.i(TAG, "[EMISOR REANUDANDO EXITOSO] Nuevo payloadId=$newPayloadId para originalId=${event.payloadId}")
+                                chatDao.updateFileProgress(event.payloadId, event.offset, "IN_PROGRESS")
+                            } else {
+                                Log.e(TAG, "[EMISOR REANUDANDO ERROR] sendFilePayloadWithOffset devolvio NULL")
+                            }
+                        } else {
+                            Log.e(TAG, "[EMISOR CONTROL ERROR] No se encontro el mensaje original o fileUri es NULL para payloadId=${event.payloadId}")
+                        }
+                    }
                 }
             }
         }
     }
 
     override fun getChatHistory(): Flow<List<ChatMessage>> {
-        return chatDao.getChatHistory().map { entities ->
-            entities.map { it.toDomain() }
+        return p2pManager.activeSessionId.flatMapLatest { sessionId ->
+            if (sessionId.isBlank()) {
+                chatDao.getChatHistory().map { entities -> entities.map { it.toDomain() } }
+            } else {
+                chatDao.getChatHistoryBySession(sessionId).map { entities -> entities.map { it.toDomain() } }
+            }
         }
     }
 
     override suspend fun sendTextMessage(text: String, senderName: String) {
         if (text.isBlank()) return
+        val currentSessionId = p2pManager.activeSessionId.value
         val entity = ChatMessageEntity(
             id = UUID.randomUUID().toString(),
+            sessionId = currentSessionId,
             senderName = senderName,
             message = text,
             timestamp = System.currentTimeMillis(),
@@ -136,8 +174,10 @@ class ChatRepositoryImpl @Inject constructor(
 
         val payloadId = p2pManager.sendFilePayload(uri, fileName, fileSize)
         if (payloadId != null) {
+            val currentSessionId = p2pManager.activeSessionId.value
             val entity = ChatMessageEntity(
                 id = payloadId.toString(),
+                sessionId = currentSessionId,
                 senderName = senderName,
                 message = fileName,
                 timestamp = System.currentTimeMillis(),
@@ -165,15 +205,38 @@ class ChatRepositoryImpl @Inject constructor(
     }
 
     override suspend fun resumeFileTransfer(payloadId: Long, context: Context) {
-        val message = chatDao.getMessageByPayloadId(payloadId)
-        if (message != null && message.fileUri != null) {
-            val uri = Uri.parse(message.fileUri)
-            val newPayloadId = p2pManager.sendFilePayload(uri, message.fileName ?: "file", message.fileSize)
-            if (newPayloadId != null) {
-                chatDao.insertMessage(
-                    message.copy(payloadId = newPayloadId, fileStatus = "IN_PROGRESS")
+        val message = chatDao.getMessageByPayloadId(payloadId) ?: run {
+            Log.e(TAG, "[REANUDAR ERROR] No se encontro el mensaje con payloadId=$payloadId en Room")
+            return
+        }
+        if (message.isFromMe) {
+            // Emisor: Abrir archivo local y enviar con offset y META_RESUME
+            if (message.fileUri != null) {
+                val uri = Uri.parse(message.fileUri)
+                val offset = message.bytesTransferred
+                Log.i(TAG, "[EMISOR BOTON REANUDAR] Presionado por Emisor: payloadId=$payloadId, uri=$uri, offset=$offset")
+                val newPayloadId = p2pManager.sendFilePayloadWithOffset(
+                    uri = uri,
+                    fileName = message.fileName ?: "file",
+                    fileSize = message.fileSize,
+                    offset = offset,
+                    originalPayloadId = payloadId
                 )
+                if (newPayloadId != null) {
+                    Log.i(TAG, "[EMISOR BOTON REANUDAR EXITO] Nuevo payloadId=$newPayloadId iniciado")
+                    chatDao.updateFileProgress(payloadId, offset, "IN_PROGRESS")
+                } else {
+                    Log.e(TAG, "[EMISOR BOTON REANUDAR ERROR] sendFilePayloadWithOffset devolvio NULL")
+                }
+            } else {
+                Log.e(TAG, "[EMISOR BOTON REANUDAR ERROR] fileUri es NULL para payloadId=$payloadId")
             }
+        } else {
+            // Receptor: Enviar mensaje de control CONTROL_RESUME|<payloadId>|<bytesTransferred> al Emisor
+            val controlMessage = "CONTROL_RESUME|$payloadId|${message.bytesTransferred}"
+            Log.i(TAG, "[RECEPTOR BOTON REANUDAR] Presionado por Receptor. Enviando comando exacto: $controlMessage")
+            p2pManager.sendPayload(controlMessage)
+            chatDao.updateFileProgress(payloadId, message.bytesTransferred, "IN_PROGRESS")
         }
     }
 

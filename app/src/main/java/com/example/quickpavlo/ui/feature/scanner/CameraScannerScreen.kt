@@ -14,6 +14,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -54,6 +56,7 @@ import java.util.concurrent.Executors
 @Composable
 fun CameraScannerScreen(
     onQrScanned: (String) -> Unit,
+    isConnecting: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -85,7 +88,9 @@ fun CameraScannerScreen(
                         .build()
                         .also {
                             it.setAnalyzer(cameraExecutor, QrCodeAnalyzer { qrValue ->
-                                onQrScanned(qrValue)
+                                if (!isConnecting) {
+                                    onQrScanned(qrValue)
+                                }
                             })
                         }
 
@@ -151,6 +156,38 @@ fun CameraScannerScreen(
                 textAlign = TextAlign.Center,
                 color = Color.White.copy(alpha = 0.85f)
             )
+        }
+
+        // 4. OVERLAY DE ESTADO "LOADING" CUANDO CONECTANDO (PROBLEMA 2)
+        if (isConnecting) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.85f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(24.dp)
+                ) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 4.dp,
+                        modifier = Modifier.size(56.dp)
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Text(
+                        text = "Estableciendo conexión segura...",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.White,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
     }
 }

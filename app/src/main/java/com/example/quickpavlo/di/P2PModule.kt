@@ -1,6 +1,7 @@
 package com.example.quickpavlo.di
 
 import android.content.Context
+import com.example.quickpavlo.data.local.UserIdentityManager
 import com.example.quickpavlo.data.network.NearbyP2PConnectionManagerImpl
 import com.example.quickpavlo.domain.network.P2PConnectionManager
 import dagger.Module
@@ -17,8 +18,9 @@ object P2PModule {
     @Provides
     @Singleton
     fun provideP2PConnectionManager(
-        @ApplicationContext context: Context
+        @ApplicationContext context: Context,
+        userIdentityManager: UserIdentityManager
     ) : P2PConnectionManager {
-        return NearbyP2PConnectionManagerImpl(context)
+        return NearbyP2PConnectionManagerImpl(context, userIdentityManager)
     }
 }
