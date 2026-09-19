@@ -14,26 +14,28 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
@@ -48,9 +50,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.example.quickpavlo.ui.theme.AccentGreen
+import com.example.quickpavlo.ui.theme.DarkGreenBorder
+import com.example.quickpavlo.ui.theme.DarkGreenSurface
+import com.example.quickpavlo.ui.theme.TextPrimary
 import java.util.concurrent.Executors
 
 @Composable
@@ -124,41 +131,61 @@ fun CameraScannerScreen(
         Column(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .padding(top = 48.dp, start = 24.dp, end = 24.dp)
-                .background(
-                    color = Color.Black.copy(alpha = 0.65f),
-                    shape = RoundedCornerShape(16.dp)
-                )
-                .padding(horizontal = 20.dp, vertical = 14.dp),
+                .systemBarsPadding()
+                .padding(top = 16.dp, start = 20.dp, end = 20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Icon(
-                imageVector = Icons.Default.QrCodeScanner,
-                contentDescription = "Escáner QR",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(36.dp)
-            )
+            // Badge de Estado
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(50))
+                    .background(DarkGreenSurface.copy(alpha = 0.90f))
+                    .border(1.dp, DarkGreenBorder, RoundedCornerShape(50))
+                    .padding(horizontal = 18.dp, vertical = 8.dp)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .clip(CircleShape)
+                            .background(AccentGreen)
+                    )
 
-            Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Text(
+                        text = "ESCANEAR CÓDIGO P2P",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary,
+                        letterSpacing = 1.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             Text(
-                text = "Escanear Código QR",
-                style = MaterialTheme.typography.titleMedium,
+                text = "Escanear QR de Conexión",
+                fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.White
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "Alinea el código dentro del recuadro para conectarte",
-                style = MaterialTheme.typography.bodySmall,
+                text = "Alinea el código dentro del recuadro para vincularte.",
+                fontSize = 13.5.sp,
                 textAlign = TextAlign.Center,
                 color = Color.White.copy(alpha = 0.85f)
             )
         }
 
-        // 4. OVERLAY DE ESTADO "LOADING" CUANDO CONECTANDO (PROBLEMA 2)
+        // 4. Overlay de Estado "Conectando"
         if (isConnecting) {
             Box(
                 modifier = Modifier
@@ -172,18 +199,18 @@ fun CameraScannerScreen(
                     modifier = Modifier.padding(24.dp)
                 ) {
                     CircularProgressIndicator(
-                        color = MaterialTheme.colorScheme.primary,
+                        color = AccentGreen,
                         strokeWidth = 4.dp,
-                        modifier = Modifier.size(56.dp)
+                        modifier = Modifier.size(52.dp)
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
 
                     Text(
-                        text = "Estableciendo conexión segura...",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "Estableciendo conexión segura P2P...",
+                        fontSize = 16.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = Color.White,
+                        color = TextPrimary,
                         textAlign = TextAlign.Center
                     )
                 }
@@ -195,12 +222,12 @@ fun CameraScannerScreen(
 @Composable
 fun QrScannerOverlay(
     modifier: Modifier = Modifier,
-    boxSize: Dp = 260.dp
+    boxSize: Dp = 270.dp
 ) {
     val boxSizePx = with(LocalDensity.current) { boxSize.toPx() }
-    val primaryColor = MaterialTheme.colorScheme.primary
+    val primaryColor = AccentGreen
     val cornerLength = with(LocalDensity.current) { 32.dp.toPx() }
-    val strokeWidth = with(LocalDensity.current) { 5.dp.toPx() }
+    val strokeWidth = with(LocalDensity.current) { 4.5.dp.toPx() }
 
     // Animación de la línea láser de escaneo
     val infiniteTransition = rememberInfiniteTransition(label = "scanner_laser_transition")
@@ -223,7 +250,7 @@ fun QrScannerOverlay(
         val right = left + boxSizePx
         val bottom = top + boxSizePx
 
-        // 1. Capa oscura exterior con recorte transparente central (Máscara)
+        // 1. Capa oscura exterior con recorte transparente central
         val overlayPath = Path().apply {
             addRect(Rect(0f, 0f, width, height))
             addRoundRect(
@@ -236,10 +263,10 @@ fun QrScannerOverlay(
         }
         drawPath(
             path = overlayPath,
-            color = Color.Black.copy(alpha = 0.65f)
+            color = Color.Black.copy(alpha = 0.70f)
         )
 
-        // 2. Esquinas resaltadas del marco de enfoque
+        // 2. Esquinas resaltadas en verde esmeralda
         // Esquina Superior Izquierda
         drawPath(
             path = Path().apply {
@@ -284,13 +311,13 @@ fun QrScannerOverlay(
             style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
         )
 
-        // 3. Línea láser animada recorriendo el objetivo
+        // 3. Línea láser verde animada
         val laserY = top + (boxSizePx * laserYRatio)
         drawLine(
             color = primaryColor,
             start = Offset(left + 12f, laserY),
             end = Offset(right - 12f, laserY),
-            strokeWidth = strokeWidth / 1.5f,
+            strokeWidth = 2.5.dp.toPx(),
             cap = StrokeCap.Round
         )
     }
