@@ -48,12 +48,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.quickpavlo.domain.network.ConnectionState
 import com.example.quickpavlo.ui.feature.scanner.QrCodeImage
-import com.example.quickpavlo.ui.theme.AccentGreen
+import com.example.quickpavlo.ui.theme.AccentBlue
 import com.example.quickpavlo.ui.theme.DarkBackground
-import com.example.quickpavlo.ui.theme.DarkGreenBorder
-import com.example.quickpavlo.ui.theme.DarkGreenSurface
+import com.example.quickpavlo.ui.theme.DarkBlueBorder
+import com.example.quickpavlo.ui.theme.DarkBlueSurface
 import com.example.quickpavlo.ui.theme.QuickPavloTheme
-import com.example.quickpavlo.ui.theme.TextGreenLight
+import com.example.quickpavlo.ui.theme.TextBlueLight
 import com.example.quickpavlo.ui.theme.TextPrimary
 import com.example.quickpavlo.ui.theme.TextSecondary
 
@@ -95,8 +95,8 @@ fun HostQrScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(DarkGreenSurface)
-                    .border(1.dp, DarkGreenBorder, RoundedCornerShape(50))
+                    .background(DarkBlueSurface)
+                    .border(1.dp, DarkBlueBorder, RoundedCornerShape(50))
                     .padding(horizontal = 18.dp, vertical = 8.dp)
             ) {
                 Row(
@@ -107,7 +107,7 @@ fun HostQrScreen(
                         modifier = Modifier
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(AccentGreen)
+                            .background(AccentBlue)
                     )
 
                     Spacer(modifier = Modifier.width(10.dp))
@@ -147,22 +147,22 @@ fun HostQrScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 4. Tarjeta del Código QR con visor, esquinas verdes y centro destacado (Sin láser)
+            // 4. Tarjeta del Código QR con visor y esquinas en Azul Frío
             val token = qrToken
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.92f)
                     .aspectRatio(1f)
                     .cardGlow(
-                        glowColor = AccentGreen,
+                        glowColor = AccentBlue,
                         glowAlpha = 0.28f,
                         glowRadius = 26.dp,
                         spread = 4.dp,
                         cornerRadius = 28.dp
                     )
                     .clip(RoundedCornerShape(28.dp))
-                    .background(DarkGreenSurface)
-                    .border(1.dp, DarkGreenBorder, RoundedCornerShape(28.dp))
+                    .background(DarkBlueSurface)
+                    .border(1.dp, DarkBlueBorder, RoundedCornerShape(28.dp))
                     .padding(18.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -170,8 +170,8 @@ fun HostQrScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color(0xFF09120E))
-                        .border(1.dp, Color(0xFF1B352A), RoundedCornerShape(20.dp))
+                        .background(Color(0xFF0D1527))
+                        .border(1.dp, Color(0xFF1E2D4A), RoundedCornerShape(20.dp))
                         .padding(14.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -181,8 +181,6 @@ fun HostQrScreen(
                                 content = token,
                                 modifier = Modifier.fillMaxSize()
                             )
-
-
                         }
                     } else {
                         Column(
@@ -190,7 +188,7 @@ fun HostQrScreen(
                             verticalArrangement = Arrangement.Center
                         ) {
                             CircularProgressIndicator(
-                                color = AccentGreen,
+                                color = AccentBlue,
                                 strokeWidth = 3.dp,
                                 modifier = Modifier.size(44.dp)
                             )
@@ -203,7 +201,7 @@ fun HostQrScreen(
                         }
                     }
 
-                    // Marco de enfoque con esquinas verdes
+                    // Marco de enfoque con esquinas en Azul Frío
                     TargetFrameOverlay(modifier = Modifier.fillMaxSize())
                 }
             }
@@ -225,9 +223,9 @@ fun HostQrScreen(
                 fontSize = 13.5.sp,
                 fontWeight = FontWeight.Medium,
                 color = when (connectionState) {
-                    ConnectionState.CONNECTED -> AccentGreen
+                    ConnectionState.CONNECTED -> AccentBlue
                     ConnectionState.ERROR -> Color(0xFFEF4444)
-                    else -> TextGreenLight
+                    else -> TextBlueLight
                 }
             )
 
@@ -243,7 +241,7 @@ private fun TargetFrameOverlay(modifier: Modifier = Modifier) {
         val h = size.height
         val cornerLen = 22.dp.toPx()
         val strokeW = 3.5.dp.toPx()
-        val color = Color(0xFF22C55E)
+        val color = Color(0xFF3B82F6)
 
         // Esquina Superior Izquierda
         drawPath(
@@ -292,7 +290,7 @@ private fun TargetFrameOverlay(modifier: Modifier = Modifier) {
 }
 
 private fun Modifier.cardGlow(
-    glowColor: Color = Color(0xFF22C55E),
+    glowColor: Color = Color(0xFF3B82F6),
     glowAlpha: Float = 0.28f,
     glowRadius: Dp = 24.dp,
     spread: Dp = 4.dp,

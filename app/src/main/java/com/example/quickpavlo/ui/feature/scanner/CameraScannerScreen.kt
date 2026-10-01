@@ -1,5 +1,6 @@
 package com.example.quickpavlo.ui.feature.scanner
 
+import android.graphics.BlurMaskFilter
 import android.view.ViewGroup
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -7,6 +8,7 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -28,7 +30,6 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -45,6 +46,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -54,9 +57,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.example.quickpavlo.ui.theme.AccentGreen
-import com.example.quickpavlo.ui.theme.DarkGreenBorder
-import com.example.quickpavlo.ui.theme.DarkGreenSurface
+import com.example.quickpavlo.ui.theme.AccentBlue
+import com.example.quickpavlo.ui.theme.DarkBlueBorder
+import com.example.quickpavlo.ui.theme.DarkBlueSurface
 import com.example.quickpavlo.ui.theme.TextPrimary
 import java.util.concurrent.Executors
 
@@ -139,8 +142,8 @@ fun CameraScannerScreen(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(50))
-                    .background(DarkGreenSurface.copy(alpha = 0.90f))
-                    .border(1.dp, DarkGreenBorder, RoundedCornerShape(50))
+                    .background(DarkBlueSurface.copy(alpha = 0.90f))
+                    .border(1.dp, DarkBlueBorder, RoundedCornerShape(50))
                     .padding(horizontal = 18.dp, vertical = 8.dp)
             ) {
                 Row(
@@ -151,7 +154,7 @@ fun CameraScannerScreen(
                         modifier = Modifier
                             .size(10.dp)
                             .clip(CircleShape)
-                            .background(AccentGreen)
+                            .background(AccentBlue)
                     )
 
                     Spacer(modifier = Modifier.width(10.dp))
@@ -185,12 +188,12 @@ fun CameraScannerScreen(
             )
         }
 
-        // 4. Overlay de Estado "Conectando"
+        // 4. Overlay de Estado "Conectando" con la Esfera de Luz Respiratoria (Azul + Ámbar)
         if (isConnecting) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.85f)),
+                    .background(Color.Black.copy(alpha = 0.88f)),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
@@ -198,13 +201,9 @@ fun CameraScannerScreen(
                     verticalArrangement = Arrangement.Center,
                     modifier = Modifier.padding(24.dp)
                 ) {
-                    CircularProgressIndicator(
-                        color = AccentGreen,
-                        strokeWidth = 4.dp,
-                        modifier = Modifier.size(52.dp)
-                    )
+                    GlowingOrbLoader(size = 80.dp)
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
                     Text(
                         text = "Estableciendo conexión segura P2P...",
@@ -219,13 +218,119 @@ fun CameraScannerScreen(
     }
 }
 
+/**
+ * Cargador de Esfera de Luz con Halo Difuminado en combinación de Azul Eléctrico y Naranja Ámbar.
+ */
+@Composable
+fun GlowingOrbLoader(
+    modifier: Modifier = Modifier,
+    size: Dp = 80.dp
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "orb_loader_anim")
+
+    // Pulsación suave de respiración
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 0.88f,
+        targetValue = 1.08f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "pulseScale"
+    )
+
+    // Rotación suave continua de los colores Azul + Ámbar
+    val rotationAngle by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 2600, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "rotationAngle"
+    )
+
+    Box(
+        modifier = modifier.size(size * pulseScale),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val centerPx = Offset(this.size.width / 2f, this.size.height / 2f)
+            val radiusPx = (this.size.minDimension / 2f) * 0.68f
+
+            drawIntoCanvas { canvas ->
+                // 1. Halo difuminado exterior en Azul
+                val blueGlowPaint = android.graphics.Paint().apply {
+                    isAntiAlias = true
+                    color = android.graphics.Color.parseColor("#3B82F6")
+                    alpha = (0.75f * 255).toInt()
+                    maskFilter = BlurMaskFilter(18.dp.toPx(), BlurMaskFilter.Blur.NORMAL)
+                }
+
+                canvas.nativeCanvas.drawCircle(
+                    centerPx.x,
+                    centerPx.y,
+                    radiusPx * 1.20f,
+                    blueGlowPaint
+                )
+
+                // 2. Halo difuminado exterior en Naranja Ámbar
+                val amberGlowPaint = android.graphics.Paint().apply {
+                    isAntiAlias = true
+                    color = android.graphics.Color.parseColor("#F97316")
+                    alpha = (0.65f * 255).toInt()
+                    maskFilter = BlurMaskFilter(14.dp.toPx(), BlurMaskFilter.Blur.NORMAL)
+                }
+
+                canvas.nativeCanvas.drawCircle(
+                    centerPx.x,
+                    centerPx.y,
+                    radiusPx * 1.05f,
+                    amberGlowPaint
+                )
+
+                // 3. Esfera sólida con degradado de barrido rotatorio (Azul + Ámbar)
+                val sweepGradient = android.graphics.SweepGradient(
+                    centerPx.x,
+                    centerPx.y,
+                    intArrayOf(
+                        android.graphics.Color.parseColor("#3B82F6"), // Azul Eléctrico
+                        android.graphics.Color.parseColor("#60A5FA"), // Azul Claro
+                        android.graphics.Color.parseColor("#F97316"), // Naranja Ámbar
+                        android.graphics.Color.parseColor("#FB923C"), // Ámbar Claro
+                        android.graphics.Color.parseColor("#3B82F6")  // Retorno a Azul
+                    ),
+                    null
+                )
+
+                val matrix = android.graphics.Matrix()
+                matrix.postRotate(rotationAngle, centerPx.x, centerPx.y)
+                sweepGradient.setLocalMatrix(matrix)
+
+                val orbPaint = android.graphics.Paint().apply {
+                    isAntiAlias = true
+                    shader = sweepGradient
+                    style = android.graphics.Paint.Style.FILL
+                }
+
+                canvas.nativeCanvas.drawCircle(
+                    centerPx.x,
+                    centerPx.y,
+                    radiusPx,
+                    orbPaint
+                )
+            }
+        }
+    }
+}
+
 @Composable
 fun QrScannerOverlay(
     modifier: Modifier = Modifier,
     boxSize: Dp = 270.dp
 ) {
     val boxSizePx = with(LocalDensity.current) { boxSize.toPx() }
-    val primaryColor = AccentGreen
+    val primaryColor = AccentBlue
     val cornerLength = with(LocalDensity.current) { 32.dp.toPx() }
     val strokeWidth = with(LocalDensity.current) { 4.5.dp.toPx() }
 
@@ -266,7 +371,7 @@ fun QrScannerOverlay(
             color = Color.Black.copy(alpha = 0.70f)
         )
 
-        // 2. Esquinas resaltadas en verde esmeralda
+        // 2. Esquinas resaltadas en Azul Frío
         // Esquina Superior Izquierda
         drawPath(
             path = Path().apply {
@@ -311,7 +416,7 @@ fun QrScannerOverlay(
             style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
         )
 
-        // 3. Línea láser verde animada
+        // 3. Línea láser azul animada
         val laserY = top + (boxSizePx * laserYRatio)
         drawLine(
             color = primaryColor,

@@ -51,17 +51,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.quickpavlo.ui.theme.AccentGreen
+import com.example.quickpavlo.ui.theme.AccentBlue
 import com.example.quickpavlo.ui.theme.AccentOrange
 import com.example.quickpavlo.ui.theme.DarkBackground
-import com.example.quickpavlo.ui.theme.DarkGreenBorder
-import com.example.quickpavlo.ui.theme.DarkGreenChip
-import com.example.quickpavlo.ui.theme.DarkGreenSurface
+import com.example.quickpavlo.ui.theme.DarkBlueBorder
+import com.example.quickpavlo.ui.theme.DarkBlueChip
+import com.example.quickpavlo.ui.theme.DarkBlueSurface
 import com.example.quickpavlo.ui.theme.DarkOrangeBorder
 import com.example.quickpavlo.ui.theme.DarkOrangeChip
 import com.example.quickpavlo.ui.theme.DarkOrangeSurface
 import com.example.quickpavlo.ui.theme.QuickPavloTheme
-import com.example.quickpavlo.ui.theme.TextGreenLight
+import com.example.quickpavlo.ui.theme.TextBlueLight
 import com.example.quickpavlo.ui.theme.TextMuted
 import com.example.quickpavlo.ui.theme.TextPrimary
 import com.example.quickpavlo.ui.theme.TextSecondary
@@ -98,27 +98,27 @@ fun HomeScreen(
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // 3. Tarjetas de Acción
-            // Tarjeta 1: Enviar (Verde Esmeralda)
+            // 3. Tarjetas de Acción (Azul Frío para Enviar, Naranja Ámbar para Recibir)
+            // Tarjeta 1: Enviar (Azul Frío)
             ActionCard(
                 title = "Enviar",
                 description = "Envía fotos, videos o carpetas completas",
-                glowColor = AccentGreen,
-                surfaceColor = DarkGreenSurface,
-                borderColor = DarkGreenBorder,
+                glowColor = AccentBlue,
+                surfaceColor = DarkBlueSurface,
+                borderColor = DarkBlueBorder,
                 icon = {
                     Box(
                         modifier = Modifier
                             .size(54.dp)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(DarkGreenChip)
-                            .border(1.dp, DarkGreenBorder, RoundedCornerShape(16.dp)),
+                            .background(DarkBlueChip)
+                            .border(1.dp, DarkBlueBorder, RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowUpward,
                             contentDescription = "Enviar",
-                            tint = AccentGreen,
+                            tint = AccentBlue,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -128,14 +128,14 @@ fun HomeScreen(
                         modifier = Modifier
                             .size(44.dp)
                             .clip(CircleShape)
-                            .background(DarkGreenChip)
-                            .border(1.dp, DarkGreenBorder, CircleShape),
+                            .background(DarkBlueChip)
+                            .border(1.dp, DarkBlueBorder, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
-                            tint = AccentGreen,
+                            tint = AccentBlue,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -206,14 +206,14 @@ private fun HeaderSection(
             modifier = Modifier
                 .size(48.dp)
                 .clip(RoundedCornerShape(16.dp))
-                .background(DarkGreenSurface)
-                .border(1.dp, DarkGreenBorder, RoundedCornerShape(16.dp)),
+                .background(DarkBlueSurface)
+                .border(1.dp, DarkBlueBorder, RoundedCornerShape(16.dp)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.Default.Sensors,
                 contentDescription = "App Logo",
-                tint = AccentGreen,
+                tint = AccentBlue,
                 modifier = Modifier.size(26.dp)
             )
         }
@@ -235,7 +235,7 @@ private fun HeaderSection(
                     text = "•",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    color = AccentGreen
+                    color = AccentBlue
                 )
             }
 
@@ -261,8 +261,8 @@ private fun StatusSection() {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(50))
-                .background(DarkGreenSurface)
-                .border(1.dp, DarkGreenBorder, RoundedCornerShape(50))
+                .background(DarkBlueSurface)
+                .border(1.dp, DarkBlueBorder, RoundedCornerShape(50))
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             Row(
@@ -273,7 +273,7 @@ private fun StatusSection() {
                     modifier = Modifier
                         .size(9.dp)
                         .clip(CircleShape)
-                        .background(AccentGreen)
+                        .background(AccentBlue)
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -282,7 +282,7 @@ private fun StatusSection() {
                     text = "Listo para conectar",
                     fontSize = 13.5.sp,
                     fontWeight = FontWeight.Medium,
-                    color = TextGreenLight
+                    color = TextBlueLight
                 )
             }
         }
@@ -308,17 +308,17 @@ private fun ActionCard(
     actionIcon: @Composable () -> Unit,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    glowColor: Color = AccentGreen,
-    surfaceColor: Color = DarkGreenSurface,
-    borderColor: Color = DarkGreenBorder
+    glowColor: Color = AccentBlue,
+    surfaceColor: Color = DarkBlueSurface,
+    borderColor: Color = DarkBlueBorder
 ) {
-    // Animación continua de respiración en la intensidad del glow
+    // Animación continua de respiración en la intensidad del glow (brillante e intensa)
     val infiniteTransition = rememberInfiniteTransition(label = "card_glow_anim")
     val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.20f,
-        targetValue = 0.38f,
+        initialValue = 0.50f,
+        targetValue = 0.88f,
         animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 2400, easing = LinearOutSlowInEasing),
+            animation = tween(durationMillis = 2200, easing = LinearOutSlowInEasing),
             repeatMode = RepeatMode.Reverse
         ),
         label = "glowAlpha"
@@ -331,8 +331,8 @@ private fun ActionCard(
             .cardGlow(
                 glowColor = glowColor,
                 glowAlpha = glowAlpha,
-                glowRadius = 24.dp,
-                spread = 4.dp,
+                glowRadius = 28.dp,
+                spread = 6.dp,
                 cornerRadius = 24.dp
             )
             .clip(RoundedCornerShape(24.dp))
@@ -392,7 +392,7 @@ private fun ActionCard(
  * 100% orgánico utilizando BlurMaskFilter en el Canvas de Android.
  */
 private fun Modifier.cardGlow(
-    glowColor: Color = AccentGreen,
+    glowColor: Color = AccentBlue,
     glowAlpha: Float = 0.30f,
     glowRadius: Dp = 24.dp,
     spread: Dp = 4.dp,
